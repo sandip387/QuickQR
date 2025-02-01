@@ -5,12 +5,13 @@ const inputEle = document.getElementById("qr-text");
 
 function generateQRCode() {
   const inputValue = inputEle.value.trim();
-  if (inputValue.length > 0) {
-    // Encode the input value to handle special characters
-    const encodedValue = encodeURIComponent(inputValue);
-    imgEle.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodedValue}`;
-    boxEle.classList.add("show-img");
+  if (inputValue.length === 0) {
+    alert("Please enter some text or URL!");
   }
+  // Encode the input value to handle special characters
+  const encodedValue = encodeURIComponent(inputValue);
+  imgEle.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodedValue}`;
+  boxEle.classList.add("show-img");
 }
 btnEle.addEventListener("click", generateQRCode);
 
