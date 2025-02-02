@@ -3,10 +3,15 @@ const imgEle = document.getElementById("qr-img");
 const boxEle = document.getElementById("img-box");
 const inputEle = document.getElementById("qr-text");
 const downloadBtn = document.getElementById("download-btn");
-const fileNameInput = document.getElementById("file-name");
+const shareBtn = document.getElementById("share-btn");
 const toast = document.getElementById("toast");
 
 async function generateQRCode() {
+
+  if (imgEle.dataset.blobUrl) {
+    URL.revokeObjectURL(imgEle.dataset.blobUrl);
+  }
+
   const inputValue = inputEle.value.trim();
   if (inputValue.length === 0) {
     alert("Please enter some text or URL!");
@@ -15,7 +20,6 @@ async function generateQRCode() {
   const encodedValue = encodeURIComponent(inputValue);
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodedValue}`;
 
-  // Fetch the QR code as a blob
   try {
     const response = await fetch(qrUrl);
     if (!response.ok) throw new Error("Failed to generate QR code");
@@ -25,8 +29,9 @@ async function generateQRCode() {
     imgEle.src = URL.createObjectURL(blob);
     boxEle.classList.add("show-img");
     downloadBtn.disabled = false;
+    shareBtn.disabled = false;
 
-    // Store the blob for download
+    // Storing for download
     imgEle.dataset.blobUrl = URL.createObjectURL(blob);
   } catch (error) {
     console.error("Error generating QR code:", error);
@@ -58,4 +63,35 @@ downloadBtn.addEventListener("click", () => {
 
   toast.classList.add("show");
   setTimeout(() => toast.classList.remove("show"), 2000);
+});
+
+shareBtn.addEventListener("click", async () => {
+  try {
+    const blobUrl = imgEle.dataset.blobUrl;
+    if (!blobUrl) return;
+
+    const response = await fetch(blobUrl);
+    const blob = await response.blob();
+
+    if (navigator.share) {
+      await navigator.share({
+        files: [new File([blob], "QRCode.png", { type: "image/png" })],
+        title: "Generated QR Code",
+        text: "Check out this QR code I made!",
+      });
+    } else {
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob }),
+      ]);
+      toast.textContent = "QR Code copied to clipboard!";
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2000);
+    }
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      toast.textContent = "Sharing failed!";
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2000);
+    }
+  }
 });
